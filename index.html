@@ -376,7 +376,8 @@ textarea{resize:none;min-height:60px;}
     <p style="font-size:12px;color:var(--muted);line-height:1.8">骨格診断・パーソナルカラーをもとに「手放すべき」「要検討」「残すべき」をAIが判定します。</p>
   </div>
   <div class="profile-bar" id="profileBarDeclutter" style="margin-bottom:14px"></div>
-  <button class="btn btn-gold btn-block" onclick="runDeclutter()" style="margin-bottom:22px">✨ 断捨離診断を開始する</button>
+  <button class="btn btn-gold btn-block" onclick="runDeclutter()" style="margin-bottom:10px">✨ 断捨離診断を開始する</button>
+  <button class="btn btn-outline btn-block" onclick="removeDuplicates()" style="margin-bottom:22px;font-size:13px">🔍 重複アイテムを検出・削除する</button>
   <div id="declutterResult"></div>
 </section>
 
@@ -1067,6 +1068,28 @@ function renderSaved(){
 }
 async function deleteCoord(id){if(!confirm('削除しますか？'))return;coords=coords.filter(c=>c.id!==id);await saveToCloud();renderSaved();toast('削除しました');}
 
+// ===== DUPLICATE REMOVAL =====
+async function removeDuplicates(){
+  const seen = new Map();
+  const toDelete = [];
+  // 新しい順に並んでいるので、後から来たものを重複とみなす
+  [...items].reverse().forEach(item => {
+    const key = `${item.name}__${item.category}`;
+    if(seen.has(key)){
+      toDelete.push(item.id);
+    } else {
+      seen.set(key, true);
+    }
+  });
+  if(!toDelete.length){toast('重複アイテムはありませんでした');return;}
+  if(!confirm(`重複アイテムが${toDelete.length}件見つかりました。削除しますか？`))return;
+  for(const id of toDelete) await idbDeletePhoto(id);
+  items = items.filter(i => !toDelete.includes(i.id));
+  await saveToCloud();
+  renderWardrobe();
+  toast(`${toDelete.length}件の重複を削除しました ✓`);
+}
+
 // ===== DECLUTTER =====
 async function runDeclutter(){
   const apiKey=getApiKey();
@@ -1078,7 +1101,11 @@ async function runDeclutter(){
   const desc=items.map(i=>`ID:${i.id} カテゴリ:${CJ[i.category]} 名前:${i.name} カラー:${i.color||'不明'} シーズン:${SJ[i.season]} タグ:${i.tags.join(',')||'なし'}`).join('\n');
   const prompt=`あなたはプロのパーソナルスタイリストです。\n${pt?`【お客様情報】\n${pt}\n\n`:''}【登録アイテム】\n${desc}\n\nJSON形式のみで回答：{"summary":"全体評価（80字）","items":[{"id":数値,"judge":"手放す推奨" or "要検討" or "残すべき","reason":"判定理由（35字）"}]}`;
   try{
-    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:prompt}]})});
+    // 205件など多い場合は50件ずつに絞る
+    const limitedItems=items.slice(0,50);
+    const desc2=limitedItems.map(i=>`ID:${i.id} カテゴリ:${CJ[i.category]} 名前:${i.name} カラー:${i.color||'不明'} シーズン:${SJ[i.season]} タグ:${i.tags.join(',')||'なし'}`).join('\n');
+    const prompt2=`あなたはプロのパーソナルスタイリストです。\n${pt?`【お客様情報】\n${pt}\n\n`:''}【登録アイテム（上位50件）】\n${desc2}\n\nJSON形式のみで回答：{"summary":"全体評価（80字）","items":[{"id":数値,"judge":"手放す推奨" or "要検討" or "残すべき","reason":"判定理由（35字）"}]}`;
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:4000,messages:[{role:'user',content:prompt2}]})});
     const d=await r.json();
     if(d.error){el.innerHTML=`<div style="padding:30px;color:var(--red);font-size:12px">APIキーエラー：${d.error.message}</div>`;return;}
     let txt=d.content?.map(b=>b.text||'').join('')||'{}';
