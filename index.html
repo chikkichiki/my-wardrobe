@@ -377,7 +377,8 @@ textarea{resize:none;min-height:60px;}
   </div>
   <div class="profile-bar" id="profileBarDeclutter" style="margin-bottom:14px"></div>
   <button class="btn btn-gold btn-block" onclick="runDeclutter()" style="margin-bottom:10px">✨ 断捨離診断を開始する</button>
-  <button class="btn btn-outline btn-block" onclick="removeDuplicates()" style="margin-bottom:22px;font-size:13px">🔍 重複アイテムを検出・削除する</button>
+  <button class="btn btn-outline btn-block" onclick="findDuplicates()" style="margin-bottom:12px;font-size:13px">🔍 重複アイテムを検出する</button>
+  <div id="duplicateResult" style="margin-bottom:16px"></div>
   <div id="declutterResult"></div>
 </section>
 
@@ -1069,25 +1070,52 @@ function renderSaved(){
 async function deleteCoord(id){if(!confirm('削除しますか？'))return;coords=coords.filter(c=>c.id!==id);await saveToCloud();renderSaved();toast('削除しました');}
 
 // ===== DUPLICATE REMOVAL =====
-async function removeDuplicates(){
+let duplicatesToDelete = [];
+function findDuplicates(){
   const seen = new Map();
-  const toDelete = [];
-  // 新しい順に並んでいるので、後から来たものを重複とみなす
+  duplicatesToDelete = [];
   [...items].reverse().forEach(item => {
     const key = `${item.name}__${item.category}`;
     if(seen.has(key)){
-      toDelete.push(item.id);
+      duplicatesToDelete.push(item);
     } else {
-      seen.set(key, true);
+      seen.set(key, item);
     }
   });
-  if(!toDelete.length){toast('重複アイテムはありませんでした');return;}
-  if(!confirm(`重複アイテムが${toDelete.length}件見つかりました。削除しますか？`))return;
-  for(const id of toDelete) await idbDeletePhoto(id);
-  items = items.filter(i => !toDelete.includes(i.id));
+  const el = document.getElementById('duplicateResult');
+  if(!duplicatesToDelete.length){
+    el.innerHTML = `<div style="padding:20px;text-align:center;color:var(--muted);font-size:13px">重複アイテムは見つかりませんでした ✓</div>`;
+    return;
+  }
+  el.innerHTML = `
+    <div style="margin-bottom:12px;font-size:13px;color:var(--charcoal)">以下の<strong>${duplicatesToDelete.length}件</strong>が重複しています。削除するものを確認してください。</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;margin-bottom:16px">
+      ${duplicatesToDelete.map(item=>`
+        <div style="border:1.5px solid var(--border);border-radius:10px;padding:8px;text-align:center;font-size:11px;">
+          ${item.photo?`<img src="${item.photo}" style="width:100%;height:80px;object-fit:cover;border-radius:6px;margin-bottom:4px">`:`<div style="height:80px;display:flex;align-items:center;justify-content:center;font-size:28px">${CE[item.category]||'👗'}</div>`}
+          <div style="font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${item.name}</div>
+          <div style="color:var(--muted)">${CJ[item.category]}</div>
+        </div>
+      `).join('')}
+    </div>
+    <button onclick="confirmDeleteDuplicates()" style="width:100%;padding:12px;background:var(--red);color:white;border:none;border-radius:10px;font-size:14px;font-weight:500;cursor:pointer;">🗑 上記${duplicatesToDelete.length}件を削除する</button>
+    <button onclick="cancelDeleteDuplicates()" style="width:100%;padding:12px;background:white;color:var(--charcoal);border:1.5px solid var(--border);border-radius:10px;font-size:14px;margin-top:8px;cursor:pointer;">キャンセル</button>
+  `;
+}
+async function confirmDeleteDuplicates(){
+  if(!duplicatesToDelete.length) return;
+  const ids = duplicatesToDelete.map(i=>i.id);
+  for(const id of ids) await idbDeletePhoto(id);
+  items = items.filter(i=>!ids.includes(i.id));
   await saveToCloud();
   renderWardrobe();
-  toast(`${toDelete.length}件の重複を削除しました ✓`);
+  duplicatesToDelete = [];
+  document.getElementById('duplicateResult').innerHTML = `<div style="padding:20px;text-align:center;color:var(--green);font-size:13px">削除完了しました ✓</div>`;
+  toast(`重複を削除しました ✓`);
+}
+function cancelDeleteDuplicates(){
+  duplicatesToDelete = [];
+  document.getElementById('duplicateResult').innerHTML = '';
 }
 
 // ===== DECLUTTER =====
