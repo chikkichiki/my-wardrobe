@@ -238,6 +238,8 @@ textarea{resize:none;min-height:60px;}
   <button class="nav-btn active" onclick="showSection('wardrobe',this)">クローゼット</button>
   <button class="nav-btn" onclick="showSection('add',this)">＋ 登録</button>
   <button class="nav-btn" onclick="showSection('coord',this)">コーデ</button>
+  <button class="nav-btn" onclick="showSection('aichat',this)">AIコーデ相談</button>
+  <button class="nav-btn" onclick="showSection('shopping',this)">お買い物相談</button>
   <button class="nav-btn" onclick="showSection('saved',this)">保存済み</button>
   <button class="nav-btn" onclick="showSection('declutter',this)">断捨離</button>
 </nav>
@@ -360,11 +362,84 @@ textarea{resize:none;min-height:60px;}
   </div>
 </section>
 
+<!-- AI COORD CHAT -->
+<section id="aichat" class="section">
+  <h1 class="page-title">AI コーデ相談</h1>
+  <p class="page-subtitle">気温・シチュエーションからコーデを提案</p>
+  <div style="background:var(--warm-white);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:14px;font-size:12px;color:var(--muted);line-height:1.8">
+    💡 「明日は仕事で気温18度くらい」「週末のデートに着ていくもの」など自由に話しかけてください。クローゼットの服から提案します。
+  </div>
+  <div id="aiChatMessages" style="min-height:200px;max-height:420px;overflow-y:auto;margin-bottom:12px;display:flex;flex-direction:column;gap:12px;padding:4px 0;"></div>
+  <div style="display:flex;gap:8px;align-items:flex-end;">
+    <textarea id="aiChatInput" placeholder="例：今日は仕事、気温15度、きれいめで行きたい" style="flex:1;padding:12px;border:1.5px solid var(--border);border-radius:12px;font-family:'Noto Sans JP',sans-serif;font-size:13px;resize:none;min-height:52px;max-height:120px;background:white;" rows="2" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendAIChat();}"></textarea>
+    <button onclick="sendAIChat()" style="padding:12px 18px;background:var(--charcoal);color:white;border:none;border-radius:12px;font-size:16px;cursor:pointer;flex-shrink:0;height:52px;">送信</button>
+  </div>
+  <button onclick="clearAIChat()" style="margin-top:8px;font-size:11px;color:var(--muted);background:none;border:none;cursor:pointer;text-decoration:underline;">会話をリセット</button>
+</section>
+
+<!-- SHOPPING CONSULTATION -->
+<section id="shopping" class="section">
+  <h1 class="page-title">お買い物相談</h1>
+  <p class="page-subtitle">気になる服をAIに相談する</p>
+  <div style="background:var(--warm-white);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:14px;font-size:12px;color:var(--muted);line-height:1.8">
+    💡 気になるアイテムの写真を撮って相談してください。骨格・パーソナルカラーへの適合度、クローゼットとのかぶりを確認します。
+  </div>
+  <div id="shopPhotoPreview" style="width:100%;max-height:260px;border-radius:12px;overflow:hidden;margin-bottom:12px;background:var(--cream);display:flex;align-items:center;justify-content:center;min-height:120px;cursor:pointer;border:2px dashed var(--border);" onclick="document.getElementById('shopPhotoInput').click()">
+    <div style="text-align:center;color:var(--muted)"><div style="font-size:36px;margin-bottom:8px">📷</div><div style="font-size:13px">気になるアイテムの写真を選ぶ</div></div>
+  </div>
+  <input type="file" id="shopPhotoInput" accept="image/*" style="display:none" onchange="handleShopPhoto(event)">
+  <textarea id="shopInput" placeholder="例：このジャケット似合うかな？クローゼットに似たものある？" style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:12px;font-family:'Noto Sans JP',sans-serif;font-size:13px;resize:none;min-height:80px;background:white;margin-bottom:10px;" rows="3"></textarea>
+  <button onclick="runShoppingConsult()" class="btn btn-gold btn-block" style="margin-bottom:16px">🛍 AIに相談する</button>
+  <div id="shopResult"></div>
+</section>
+
 <!-- SAVED -->
 <section id="saved" class="section">
   <h1 class="page-title">Saved Looks</h1>
   <p class="page-subtitle">保存済みコーディネート</p>
   <div class="saved-grid" id="savedGrid"></div>
+</section>
+
+<!-- AI COORD CHAT -->
+<section id="aichat" class="section">
+  <h1 class="page-title">AI コーデ相談</h1>
+  <p class="page-subtitle">気温・シチュエーションからコーデ提案</p>
+  <div id="aichatMessages" style="min-height:300px;max-height:50vh;overflow-y:auto;display:flex;flex-direction:column;gap:12px;margin-bottom:16px;padding:4px 0;"></div>
+  <div style="background:var(--warm-white);border:1px solid var(--border);border-radius:14px;padding:12px;">
+    <textarea id="aichatInput" placeholder="例：今日は仕事で外出あり、気温は18度くらい。きれいめに行きたい" style="width:100%;border:none;background:transparent;font-family:'Noto Sans JP',sans-serif;font-size:13px;resize:none;outline:none;min-height:60px;color:var(--charcoal)"></textarea>
+    <div style="display:flex;justify-content:flex-end;margin-top:8px;">
+      <button onclick="sendAiChat()" style="padding:10px 24px;background:var(--charcoal);color:white;border:none;border-radius:10px;font-size:13px;font-weight:500;cursor:pointer;">送信 →</button>
+    </div>
+  </div>
+  <button onclick="clearAiChat()" style="margin-top:10px;font-size:11px;color:var(--muted);background:none;border:none;cursor:pointer;">会話をリセット</button>
+</section>
+
+<!-- SHOPPING ADVICE -->
+<section id="shopping" class="section">
+  <h1 class="page-title">お買い物相談</h1>
+  <p class="page-subtitle">買おうか迷ったらAIに相談</p>
+  <div style="background:var(--warm-white);border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:16px;">
+    <p style="font-size:12px;color:var(--muted);line-height:1.8">気になるアイテムの写真を撮って相談できます。骨格・パーソナルカラーへの適合や、クローゼットとのかぶりも教えます。</p>
+  </div>
+  <div id="shoppingMessages" style="min-height:200px;max-height:45vh;overflow-y:auto;display:flex;flex-direction:column;gap:12px;margin-bottom:16px;padding:4px 0;"></div>
+  <div style="background:var(--warm-white);border:1px solid var(--border);border-radius:14px;padding:12px;">
+    <div id="shoppingPhotoPreview" style="display:none;margin-bottom:10px;">
+      <img id="shoppingPhotoImg" style="width:100%;max-height:200px;object-fit:contain;border-radius:8px;">
+    </div>
+    <div style="display:flex;gap:8px;align-items:flex-end;">
+      <div style="flex:1;">
+        <textarea id="shoppingInput" placeholder="例：このワンピース似合う？クローゼットにかぶるものある？" style="width:100%;border:none;background:transparent;font-family:'Noto Sans JP',sans-serif;font-size:13px;resize:none;outline:none;min-height:50px;color:var(--charcoal)"></textarea>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;">
+      <label style="padding:8px 14px;background:var(--cream);border:1px solid var(--border);border-radius:8px;font-size:12px;cursor:pointer;">
+        📷 写真
+        <input type="file" accept="image/*" capture="environment" onchange="handleShoppingPhoto(event)" style="display:none">
+      </label>
+      <button onclick="sendShoppingAdvice()" style="padding:10px 24px;background:var(--charcoal);color:white;border:none;border-radius:10px;font-size:13px;font-weight:500;cursor:pointer;">相談する →</button>
+    </div>
+  </div>
+  <button onclick="clearShopping()" style="margin-top:10px;font-size:11px;color:var(--muted);background:none;border:none;cursor:pointer;">会話をリセット</button>
 </section>
 
 <!-- DECLUTTER -->
@@ -698,6 +773,14 @@ function showSection(id,btn){
   if(id==='saved')renderSaved();
   if(id==='coord')renderProfileBar('profileBarCoord');
   if(id==='declutter')renderProfileBar('profileBarDeclutter');
+  if(id==='aichat'&&!aiChatHistory.length){
+    const el=document.getElementById('aichatMessages');
+    if(!el.children.length) renderChatMessage('aichatMessages','assistant','こんにちは！今日のコーデを一緒に考えましょう👗\n気温やシチュエーション、気分など何でも教えてください。クローゼットの服から提案します！');
+  }
+  if(id==='shopping'&&!shoppingHistory.length){
+    const el=document.getElementById('shoppingMessages');
+    if(!el.children.length) renderChatMessage('shoppingMessages','assistant','お買い物相談室へようこそ🛍\n気になるアイテムの写真を撮るか、テキストで教えてください。似合うか・クローゼットとかぶらないかを診断します！');
+  }
 }
 
 // ===== PROFILE =====
@@ -1170,6 +1253,151 @@ function renderDeclutterResult(result){
       </div>
     </div>`;
   }).join('')}`;
+}
+
+// ===== AI COORD CHAT =====
+let aiChatHistory = [];
+let shoppingHistory = [];
+let shoppingPhotoData = null;
+
+function renderChatMessage(containerId, role, text, photoUrl){
+  const el = document.getElementById(containerId);
+  const isUser = role === 'user';
+  const div = document.createElement('div');
+  div.style.cssText = `display:flex;flex-direction:column;align-items:${isUser?'flex-end':'flex-start'};gap:4px;`;
+  div.innerHTML = `
+    ${photoUrl?`<img src="${photoUrl}" style="width:140px;border-radius:8px;margin-bottom:4px;">`:''}
+    <div style="max-width:85%;padding:12px 14px;border-radius:${isUser?'14px 14px 4px 14px':'14px 14px 14px 4px'};background:${isUser?'var(--charcoal)':'var(--warm-white)'};color:${isUser?'white':'var(--charcoal)'};font-size:13px;line-height:1.7;border:${isUser?'none':'1px solid var(--border)'}">
+      ${text.replace(/\n/g,'<br>')}
+    </div>
+  `;
+  el.appendChild(div);
+  el.scrollTop = el.scrollHeight;
+}
+
+function getClosetSummary(){
+  if(!items.length) return 'クローゼットにアイテムはまだありません。';
+  const byCategory = {};
+  items.forEach(i=>{
+    if(!byCategory[i.category]) byCategory[i.category]=[];
+    byCategory[i.category].push(`${i.name}${i.color?`(${i.color})`:''}${i.season&&i.season!=='all'?`[${SJ[i.season]}]`:''}`);
+  });
+  return Object.entries(byCategory).map(([cat,list])=>`【${CJ[cat]}】${list.join('、')}`).join('\n');
+}
+
+async function sendAiChat(){
+  const apiKey = getApiKey();
+  if(!apiKey){openApiKeyModal();return;}
+  const input = document.getElementById('aichatInput');
+  const text = input.value.trim();
+  if(!text) return;
+  input.value = '';
+  renderChatMessage('aichatMessages','user',text);
+  aiChatHistory.push({role:'user',content:text});
+
+  // thinking表示
+  const thinking = document.createElement('div');
+  thinking.id = 'aichatThinking';
+  thinking.style.cssText = 'font-size:12px;color:var(--muted);padding:8px 0;';
+  thinking.textContent = 'AIが考え中...';
+  document.getElementById('aichatMessages').appendChild(thinking);
+
+  const pt = profileTextPlain();
+  const closet = getClosetSummary();
+  const systemPrompt = `あなたはプロのパーソナルスタイリストです。
+【ユーザー情報】${pt||'未設定'}
+【クローゼット内容】
+${closet}
+上記のクローゼットの服の中からコーデを提案してください。存在しないアイテムは提案しないでください。気温・シチュエーション・気分に合わせて具体的にアイテム名を挙げてコーデを提案し、着こなしのポイントも添えてください。日本語で200字程度で答えてください。`;
+
+  try{
+    const messages = [{role:'user',content:systemPrompt},...aiChatHistory];
+    const r = await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages})});
+    const d = await r.json();
+    document.getElementById('aichatThinking')?.remove();
+    if(d.error){renderChatMessage('aichatMessages','assistant','エラーが発生しました：'+d.error.message);return;}
+    const reply = d.content?.map(b=>b.text||'').join('')||'';
+    aiChatHistory.push({role:'assistant',content:reply});
+    renderChatMessage('aichatMessages','assistant',reply);
+  }catch(e){
+    document.getElementById('aichatThinking')?.remove();
+    renderChatMessage('aichatMessages','assistant','エラーが発生しました。再度お試しください。');
+  }
+}
+
+function clearAiChat(){
+  aiChatHistory=[];
+  document.getElementById('aichatMessages').innerHTML='';
+}
+
+// ===== SHOPPING ADVICE =====
+function handleShoppingPhoto(e){
+  const f = e.target.files[0];
+  if(!f) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    shoppingPhotoData = ev.target.result;
+    document.getElementById('shoppingPhotoImg').src = shoppingPhotoData;
+    document.getElementById('shoppingPhotoPreview').style.display = 'block';
+  };
+  reader.readAsDataURL(f);
+}
+
+async function sendShoppingAdvice(){
+  const apiKey = getApiKey();
+  if(!apiKey){openApiKeyModal();return;}
+  const input = document.getElementById('shoppingInput');
+  const text = input.value.trim();
+  if(!text && !shoppingPhotoData){toast('テキストか写真を入力してください');return;}
+  input.value='';
+
+  renderChatMessage('shoppingMessages','user',text||'写真を相談します',shoppingPhotoData);
+
+  const thinking = document.createElement('div');
+  thinking.id = 'shoppingThinking';
+  thinking.style.cssText = 'font-size:12px;color:var(--muted);padding:8px 0;';
+  thinking.textContent = 'AIが分析中...';
+  document.getElementById('shoppingMessages').appendChild(thinking);
+
+  const pt = profileTextPlain();
+  const closet = getClosetSummary();
+  const systemText = `あなたはプロのパーソナルスタイリストです。
+【ユーザー情報】${pt||'未設定'}
+【クローゼット内容】
+${closet}
+ユーザーが購入を検討しているアイテムについて相談に乗ってください。
+①骨格・パーソナルカラーへの適合度、②クローゼットとのかぶりや相性、③購入の推奨・非推奨を具体的に答えてください。日本語200字程度で。`;
+
+  const userContent = [];
+  if(shoppingPhotoData){
+    const base64 = shoppingPhotoData.split(',')[1];
+    const mediaType = shoppingPhotoData.split(';')[0].split(':')[1]||'image/jpeg';
+    userContent.push({type:'image',source:{type:'base64',media_type:mediaType,data:base64}});
+  }
+  userContent.push({type:'text',text:systemText+(text?`\nユーザーの質問：${text}`:'')});
+
+  shoppingHistory.push({role:'user',content:text||'写真を見てください'});
+
+  try{
+    const r = await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:userContent}]})});
+    const d = await r.json();
+    document.getElementById('shoppingThinking')?.remove();
+    if(d.error){renderChatMessage('shoppingMessages','assistant','エラー：'+d.error.message);return;}
+    const reply = d.content?.map(b=>b.text||'').join('')||'';
+    shoppingHistory.push({role:'assistant',content:reply});
+    renderChatMessage('shoppingMessages','assistant',reply);
+    shoppingPhotoData = null;
+    document.getElementById('shoppingPhotoPreview').style.display='none';
+  }catch(e){
+    document.getElementById('shoppingThinking')?.remove();
+    renderChatMessage('shoppingMessages','assistant','エラーが発生しました。再度お試しください。');
+  }
+}
+
+function clearShopping(){
+  shoppingHistory=[];shoppingPhotoData=null;
+  document.getElementById('shoppingMessages').innerHTML='';
+  document.getElementById('shoppingPhotoPreview').style.display='none';
 }
 
 // ===== INIT =====
